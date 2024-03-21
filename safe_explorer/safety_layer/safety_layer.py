@@ -38,7 +38,7 @@ class SafetyLayer:
         return tensor
 
     def _cuda(self):
-        for_each(lambda x: x.cuda(), self._models)
+        for_each(lambda x: x.cuda("cuda:3"), self._models)
 
     def _eval_mode(self):
         for_each(lambda x: x.eval(), self._models)
