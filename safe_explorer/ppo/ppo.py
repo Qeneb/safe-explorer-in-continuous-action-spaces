@@ -81,6 +81,7 @@ class PPO:
             os.makedirs('../param/img')
 
     def select_action(self, state, c):
+        print(state)
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
             action_prob = self.actor_net(state)
