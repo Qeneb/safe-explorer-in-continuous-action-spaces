@@ -3,7 +3,7 @@ from collections import namedtuple
 from itertools import count
 
 import os, time
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -81,6 +81,12 @@ class PPO:
             os.makedirs('../param/img')
 
     def select_action(self, state, c):
+
+        agent_position = state['agent_position']
+        print(agent_position)
+        target_position = state['target_postion']
+        print(target_position)
+        state = np.hstack((agent_position, target_position))
         print(state)
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
