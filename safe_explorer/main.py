@@ -53,11 +53,11 @@ class Trainer:
         # actor = Actor(observation_dim, env.action_space.shape[0])
         # critic = Critic(observation_dim, env.action_space.shape[0])
 
-        # safe_action_func = safety_layer.get_safe_action if safety_layer else None
+        safe_action_func = safety_layer.get_safe_action if safety_layer else None
         # ddpg = DDPG(env, actor, critic, safe_action_func)
 
         # ddpg.train()
-        ppo = PPO(env, observation_dim, env.action_space.shape[0], None)
+        ppo = PPO(env, observation_dim, env.action_space.shape[0], safe_action_func)
         ppo.train()
 
 

@@ -142,4 +142,4 @@ arguments:
           - name: "task"
             default: "ballnd"
           - name: "use_safety_layer"
-            default: false
+            default: true
