@@ -3,16 +3,13 @@ from collections import namedtuple
 from itertools import count
 
 import os, time
-import numpy as np
 
-import gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Normal, Categorical
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-from tensorboardX import SummaryWriter
 
 from safe_explorer.core.tensorboard import TensorBoard
 
@@ -53,7 +50,7 @@ class Critic(nn.Module):
         return value
 
 
-class PPO():
+class PPO:
     clip_param = 0.2
     max_grad_norm = 0.5
     ppo_update_time = 10

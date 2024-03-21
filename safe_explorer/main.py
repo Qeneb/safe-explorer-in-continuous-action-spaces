@@ -8,6 +8,7 @@ from safe_explorer.env.spaceship import Spaceship
 from safe_explorer.ddpg.actor import Actor
 from safe_explorer.ddpg.critic import Critic
 from safe_explorer.ddpg.ddpg import DDPG
+from safe_explorer.ppo.ppo import PPO
 from safe_explorer.safety_layer.safety_layer import SafetyLayer
 
 
@@ -49,13 +50,15 @@ class Trainer:
                             .map(lambda x: x.shape[0])
                             .sum())
 
-        actor = Actor(observation_dim, env.action_space.shape[0])
-        critic = Critic(observation_dim, env.action_space.shape[0])
+        # actor = Actor(observation_dim, env.action_space.shape[0])
+        # critic = Critic(observation_dim, env.action_space.shape[0])
 
         safe_action_func = safety_layer.get_safe_action if safety_layer else None
-        ddpg = DDPG(env, actor, critic, safe_action_func)
+        # ddpg = DDPG(env, actor, critic, safe_action_func)
 
-        ddpg.train()
+        # ddpg.train()
+        ppo = PPO(env, observation_dim, env.action_space.shape[0], safe_action_func)
+        ppo.train()
 
 
 if __name__ == '__main__':
