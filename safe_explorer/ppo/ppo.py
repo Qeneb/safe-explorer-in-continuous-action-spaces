@@ -80,7 +80,7 @@ class PPO:
             os.makedirs('../param/net_param')
             os.makedirs('../param/img')
 
-    def select_action(self, state, c):
+    def select_action(self, observation, state, c):
 
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
@@ -90,7 +90,7 @@ class PPO:
 
         # Notice: Data structure of action
         if self.action_modifier:
-            modified_action = self.action_modifier(state, action, c)
+            modified_action = self.action_modifier(observation, action, c)
         else:
             modified_action = action.item()
 
@@ -172,27 +172,28 @@ class PPO:
         print("==========================================================")
 
         for i_epoch in range(1000):
-            state = self.env.reset()
+            observation = self.env.reset()
 
-            agent_position = state['agent_position']
-            target_position = state['target_postion']
+            agent_position = observation['agent_position']
+            target_position = observation['target_postion']
             state = np.hstack((agent_position, target_position))
 
             c = self.env.get_constraint_values()
             # if render: self.env.render() TODO: render safe-explorer
 
             for t in count():
-                action, action_prob = self.select_action(state, c)
-                next_state, reward, done, _ = self.env.step(action)
+                action, action_prob = self.select_action(observation, state, c)
+                next_observation, reward, done, _ = self.env.step(action)
 
-                agent_position = next_state['agent_position']
-                target_position = next_state['target_postion']
+                agent_position = next_observation['agent_position']
+                target_position = next_observation['target_postion']
                 next_state = np.hstack((agent_position, target_position))
 
                 trans = Transition(state, action, action_prob, reward, next_state)
                 # if render: self.env.render() TODO: render safe-explorer
                 self.store_transition(trans)
 
+                observation = next_observation
                 state = next_state
                 c = self.env.get_constraint_values()
 
