@@ -20,7 +20,7 @@ seed = 1
 log_interval = 10
 
 
-
+torch.cuda.set_device("cuda")
 torch.manual_seed(seed)
 
 Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state'])
