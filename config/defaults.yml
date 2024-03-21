@@ -130,7 +130,7 @@ arguments:
           - name: "replay_buffer_size"
             default: 1000000
           - name: "use_gpu"
-            default: true
+            default: false
   - name: "main"
     help: "Safe-Explorer driver properties."
     properties:
