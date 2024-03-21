@@ -82,12 +82,6 @@ class PPO:
 
     def select_action(self, state, c):
 
-        agent_position = state['agent_position']
-        print(agent_position)
-        target_position = state['target_postion']
-        print(target_position)
-        state = np.hstack((agent_position, target_position))
-        print(state)
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
             action_prob = self.actor_net(state)
@@ -179,12 +173,22 @@ class PPO:
 
         for i_epoch in range(1000):
             state = self.env.reset()
+
+            agent_position = state['agent_position']
+            target_position = state['target_postion']
+            state = np.hstack((agent_position, target_position))
+
             c = self.env.get_constraint_values()
             # if render: self.env.render() TODO: render safe-explorer
 
             for t in count():
                 action, action_prob = self.select_action(state, c)
                 next_state, reward, done, _ = self.env.step(action)
+
+                agent_position = next_state['agent_position']
+                target_position = next_state['target_postion']
+                next_state = np.hstack((agent_position, target_position))
+
                 trans = Transition(state, action, action_prob, reward, next_state)
                 # if render: self.env.render() TODO: render safe-explorer
                 self.store_transition(trans)
