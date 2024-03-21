@@ -1,11 +1,9 @@
-import argparse
-import pickle
+from datetime import datetime
 from collections import namedtuple
 from itertools import count
 
 import os, time
 import numpy as np
-import matplotlib.pyplot as plt
 
 import gym
 import torch
@@ -16,22 +14,23 @@ from torch.distributions import Normal, Categorical
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 from tensorboardX import SummaryWriter
 
+from safe_explorer.core.tensorboard import TensorBoard
+
 # Parameters
 gamma = 0.99
 render = False
 seed = 1
 log_interval = 10
 
-env = gym.make('CartPole-v0').unwrapped
-num_state = env.observation_space.shape[0]
-num_action = env.action_space.n
+
+
 torch.manual_seed(seed)
-env.seed(seed)
+
 Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state'])
 
 
 class Actor(nn.Module):
-    def __init__(self):
+    def __init__(self, num_state, num_action):
         super(Actor, self).__init__()
         self.fc1 = nn.Linear(num_state, 100)
         self.action_head = nn.Linear(100, num_action)
@@ -43,7 +42,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self):
+    def __init__(self, num_state):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(num_state, 100)
         self.state_value = nn.Linear(100, 1)
@@ -61,14 +60,22 @@ class PPO():
     buffer_capacity = 1000
     batch_size = 32
 
-    def __init__(self):
+    def __init__(self,
+                 env,
+                 num_state,
+                 num_action,
+                 action_modifier=None):
         super(PPO, self).__init__()
-        self.actor_net = Actor()
-        self.critic_net = Critic()
+        self.env = env
+        self.actor_net = Actor(num_state, num_action)
+        self.critic_net = Critic(num_state)
+        # Safe layer
+        self.action_modifier = action_modifier
+
         self.buffer = []
         self.counter = 0
         self.training_step = 0
-        self.writer = SummaryWriter('../exp')
+        self.writer = TensorBoard.get_writer()
 
         self.actor_optimizer = optim.Adam(self.actor_net.parameters(), 1e-3)
         self.critic_net_optimizer = optim.Adam(self.critic_net.parameters(), 3e-3)
@@ -76,13 +83,18 @@ class PPO():
             os.makedirs('../param/net_param')
             os.makedirs('../param/img')
 
-    def select_action(self, state):
+    def select_action(self, state, c):
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
             action_prob = self.actor_net(state)
         c = Categorical(action_prob)
         action = c.sample()
-        return action.item(), action_prob[:, action.item()].item()
+
+        # Notice: Data structure of action
+        if self.action_modifier:
+            modified_action = self.action_modifier(state, action, c)
+
+        return modified_action, action_prob[:, action.item()].item()
 
     def get_value(self, state):
         state = torch.from_numpy(state)
@@ -149,27 +161,38 @@ class PPO():
 
         del self.buffer[:]  # clear experience
 
+    def train(self):
 
-def main():
-    agent = PPO()
-    for i_epoch in range(1000):
-        state = env.reset()
-        if render: env.render()
+        start_time = time.time()
 
-        for t in count():
-            action, action_prob = agent.select_action(state)
-            next_state, reward, done, _ = env.step(action)
-            trans = Transition(state, action, action_prob, reward, next_state)
-            if render: env.render()
-            agent.store_transition(trans)
-            state = next_state
+        print("==========================================================")
+        print("Initializing PPO training...")
+        print("----------------------------------------------------------")
+        print(f"Start time: {datetime.fromtimestamp(start_time)}")
+        print("==========================================================")
 
-            if done:
-                if len(agent.buffer) >= agent.batch_size: agent.update(i_epoch)
-                agent.writer.add_scalar('liveTime/livestep', t, global_step=i_epoch)
-                break
+        for i_epoch in range(1000):
+            state = self.env.reset()
+            c = self.env.get_constraint_values()
+            # if render: self.env.render() TODO: render safe-explorer
 
+            for t in count():
+                action, action_prob = self.select_action(state, c)
+                next_state, reward, done, _ = self.env.step(action)
+                trans = Transition(state, action, action_prob, reward, next_state)
+                # if render: self.env.render() TODO: render safe-explorer
+                self.store_transition(trans)
 
-if __name__ == '__main__':
-    main()
-    print("end")
+                state = next_state
+                c = self.env.get_constraint_values()
+
+                # done: dead or finished
+                if done:
+                    if len(self.buffer) >= self.batch_size:
+                        self.update(i_epoch)
+                    self.writer.add_scalar('liveTime/livestep', t, global_step=i_epoch)
+                    break
+
+        print("==========================================================")
+        print(f"Finished PPO training. Time spent: {(time.time() - start_time) // 1} secs")
+        print("==========================================================")

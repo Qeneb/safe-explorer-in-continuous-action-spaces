@@ -10,7 +10,7 @@ from torch.optim import Adam
 from safe_explorer.core.config import Config
 from safe_explorer.core.replay_buffer import ReplayBuffer
 from safe_explorer.core.tensorboard import TensorBoard
-from safe_explorer.utils.list import for_each, select_with_predicate
+from safe_explorer.utils.list import for_each
 
 class DDPG:
     def __init__(self,
