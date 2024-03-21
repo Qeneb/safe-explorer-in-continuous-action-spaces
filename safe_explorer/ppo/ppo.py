@@ -97,6 +97,8 @@ class PPO:
         # Notice: Data structure of action
         if self.action_modifier:
             modified_action = self.action_modifier(state, action, c)
+        else:
+            modified_action = action.item()
 
         return modified_action, action_prob[:, action.item()].item()
 
