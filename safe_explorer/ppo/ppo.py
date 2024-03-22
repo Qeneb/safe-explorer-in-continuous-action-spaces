@@ -88,10 +88,9 @@ class PPO:
         c = Categorical(action_prob)
         action = c.sample()
 
-        numpy_action = action.detach().numpy()
-        # Notice: Data structure of action is pytorch tensor
+        # Notice: Data structure of modified_action is pytorch tensor
         if self.action_modifier:
-            modified_action = self.action_modifier(observation, numpy_action, cons)
+            modified_action = self.action_modifier(observation, action, cons)
         else:
             modified_action = action
         modified_action.item()
