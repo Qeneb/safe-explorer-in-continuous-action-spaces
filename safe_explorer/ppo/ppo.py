@@ -183,7 +183,6 @@ class PPO:
 
             for t in count():
                 action, action_prob = self.select_action(observation, state, c)
-                numpy_action = action.detach().numpy()
                 next_observation, reward, done, _ = self.env.step(action)
 
                 agent_position = next_observation['agent_position']
