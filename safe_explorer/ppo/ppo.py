@@ -93,9 +93,8 @@ class PPO:
             modified_action = self.action_modifier(observation, action, cons)
         else:
             modified_action = action
-        modified_action.item()
 
-        return modified_action, action_prob[:, action.item()].item()
+        return modified_action.item(), action_prob[:, action.item()].item()
 
     def get_value(self, state):
         state = torch.from_numpy(state)
