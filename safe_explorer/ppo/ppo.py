@@ -80,7 +80,7 @@ class PPO:
             os.makedirs('../param/net_param')
             os.makedirs('../param/img')
 
-    def select_action(self, observation, state, c):
+    def select_action(self, observation, state, cons):
 
         state = torch.from_numpy(state).float().unsqueeze(0)
         with torch.no_grad():
@@ -90,7 +90,7 @@ class PPO:
 
         # Notice: Data structure of action
         if self.action_modifier:
-            modified_action = self.action_modifier(observation, action, c)
+            modified_action = self.action_modifier(observation, action, cons)
         else:
             modified_action = action.item()
 
